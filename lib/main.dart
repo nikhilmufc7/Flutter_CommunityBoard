@@ -41,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
     board = Board("", "");
     databaseReference = database.reference().child("community_board");
     databaseReference.onChildAdded.listen(_onEntryAdded);
+    databaseReference.onChildChanged.listen(_onEntryChanged);
   }
 
   @override
@@ -55,9 +56,11 @@ class _MyHomePageState extends State<MyHomePage> {
         children: <Widget>[
           Flexible(
             flex: 0,
-            child: Form(
-              key: formKey,
-              child: Flex(
+            child: Center(
+
+              child: Form(
+                key: formKey,
+                child: Flex(
                 direction: Axis.vertical,
                 children: <Widget>[
                   ListTile(
@@ -89,9 +92,24 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
+    ),
           Flexible(
             child: FirebaseAnimatedList(
+              query: databaseReference,
+              itemBuilder: (_,DataSnapshot snapshot,Animation<double> animation, int index){
+                return new Card(
 
+                  child: new ListTile(
+                    leading: new CircleAvatar(
+                      backgroundColor: Colors.deepPurpleAccent,
+                    ),
+                    title: new Text(boardMessages[index].subject),
+                    subtitle: new Text(boardMessages[index].body),
+                  ),
+                );
+
+
+              },
             ),
           )
         ],
@@ -113,5 +131,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
      databaseReference.push().set(board.toJson());
     }
+  }
+
+  void _onEntryChanged(Event event) {
+      var oldEntry = boardMessages.singleWhere((entry){
+          return entry.key == event.snapshot.key;
+      });
+      setState(() {
+        boardMessages[boardMessages.indexOf(oldEntry)] = Board.fromSnapshot(event.snapshot);
+      });
   }
 }
